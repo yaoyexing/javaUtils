@@ -25,6 +25,7 @@ import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.demo.m3u8download.utils.Constant.FILESEPARATOR;
 
@@ -67,7 +68,7 @@ public class M3u8DownloadFactory {
         private String fileName;
 
         //已完成ts片段个数
-        private int finishedCount = 0;
+        private AtomicInteger finishedCount = new AtomicInteger(0);
 
         //解密算法名称
         private String method;
@@ -144,8 +145,8 @@ public class M3u8DownloadFactory {
                         BigDecimal bigDecimal = new BigDecimal(downloadBytes.toString());
                         Thread.sleep(1000L);
                         Log.i("已用时" + consume + "秒！\t下载速度：" + StringUtils.convertToDownloadSpeed(new BigDecimal(downloadBytes.toString()).subtract(bigDecimal), 3) + "/s");
-                        Log.i("\t已完成" + finishedCount + "个，还剩" + (tsSet.size() - finishedCount) + "个！");
-                        Log.i(new BigDecimal(finishedCount).divide(new BigDecimal(tsSet.size()), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP) + "%");
+                        Log.i("\t已完成" + finishedCount + "个，还剩" + (tsSet.size() - finishedCount.intValue()) + "个！");
+                        Log.i(new BigDecimal(finishedCount.intValue()).divide(new BigDecimal(tsSet.size()), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP) + "%");
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -170,7 +171,7 @@ public class M3u8DownloadFactory {
                     try {
                         Thread.sleep(interval);
                         for (DownloadListener downloadListener : listenerSet)
-                            downloadListener.process(DOWNLOADURL, finishedCount, tsSet.size(), new BigDecimal(finishedCount).divide(new BigDecimal(tsSet.size()), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).floatValue());
+                            downloadListener.process(DOWNLOADURL, finishedCount.intValue(), tsSet.size(), new BigDecimal(finishedCount.intValue()).divide(new BigDecimal(tsSet.size()), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).floatValue());
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -337,8 +338,8 @@ public class M3u8DownloadFactory {
                     //自定义异常
                     throw new M3u8Exception("连接超时！");
                 }
-                finishedCount++;
-//                Log.i(urls + "下载完毕！\t已完成" + finishedCount + "个，还剩" + (tsSet.size() - finishedCount) + "个！");
+                finishedCount.incrementAndGet();
+//                Log.i(urls + "下载完毕！\t已完成" + finishedCount + "个，还剩" + (tsSet.size() - finishedCount.intValue()) + "个！");
             });
         }
 
@@ -549,7 +550,7 @@ public class M3u8DownloadFactory {
                 throw new M3u8Exception("视频存储目录不能为空！");
             if (StringUtils.isEmpty(fileName))
                 throw new M3u8Exception("视频名称不能为空！");
-            finishedCount = 0;
+            finishedCount = new AtomicInteger(0);
             method = "";
             key = "";
             isByte = false;
@@ -627,7 +628,7 @@ public class M3u8DownloadFactory {
             this.fileName = fileName;
         }
 
-        public int getFinishedCount() {
+        public AtomicInteger getFinishedCount() {
             return finishedCount;
         }
 
